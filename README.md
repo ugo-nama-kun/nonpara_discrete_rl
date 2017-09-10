@@ -25,10 +25,10 @@ from nprl.q_learning import QLearning
 
 # Initialization
 qlean = QLearning(initial_q_value=0.0,
-                      exploration_rate=1.0,
-                      lr=0.01,
-                      discount_factor=0.5,
-                      initial_fluctuation=True)
+                  exploration_rate=1.0,
+                  lr=0.01,
+                  discount_factor=0.5,
+                  initial_fluctuation=True)
                      
 # Step Update
 action = qlean.step(new_state=state,
