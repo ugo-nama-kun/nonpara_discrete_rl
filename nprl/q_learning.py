@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Python implementation of Q-learning for discrete-finite MDPa
+Python implementation of Q-learning for discrete-finite MDPs
 Naoto Yoshida
 """
 

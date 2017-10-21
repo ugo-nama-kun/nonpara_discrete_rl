@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from .context import nprl
-
 import unittest
 from nprl.q_learning import QLearning
 
@@ -29,14 +27,17 @@ class BasicTestSuite(unittest.TestCase):
         self.assertEquals(action_and_q_dict, {0:10, 1:100, 2:0})
 
     def test_get_action(self):
-        qlean = QLearning(discount_factor=0.5, maximum_state_id=None, initial_fluctuation=False)
+        qlean = QLearning(discount_factor=0.5,
+                          maximum_state_id=None,
+                          initial_fluctuation=False,
+                          exploration_rate_test=0.0,
+                          exploration_rate=0.0
+                          )
         qlean._q_values = {0:{0: 10, 1:100, 2:0}}
 
-        qlean._epsilon = 0.0
         best_action = qlean._get_action(state=0, action_list=[0,1,2], test=False)
         self.assertEquals(best_action, 1)
 
-        qlean._epsilon_test = 0.0
         best_action = qlean._get_action(state=0, action_list=[0, 1, 2], test=True)
         self.assertEquals(best_action, 1)
 
@@ -145,7 +146,7 @@ class BasicTestSuite(unittest.TestCase):
         self.assertEqual(qlean._state_action, None)
 
     def test_step(self):
-        qlean = QLearning(discount_factor=0.5, maximum_state_id=None, initial_fluctuation=False)
+        qlean = QLearning(discount_factor=0.5, maximum_state_id=None, initial_fluctuation=False, exploration_rate_test=0.0)
         qlean._q_values = {0: {0: 0, 1:-10}, 1: {0: 0}, 2: {0: 10}}
 
         self.assertEqual(qlean.step(new_state=0,
