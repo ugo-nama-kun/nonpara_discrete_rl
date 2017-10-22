@@ -13,7 +13,8 @@ The agent accepts ANY form of the action and the state representation as inputs 
 
 ## Requirenment
 - numpy
-- gym (to run example codes)
+- graphviz (to visualize the model in the model-based agent)
+- matplotlib, gym (to run example codes)
 
 ## Installation
 ```bash
