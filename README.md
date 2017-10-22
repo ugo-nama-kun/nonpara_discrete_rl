@@ -7,7 +7,9 @@ The agent accepts ANY form of the action and the state representation as inputs 
 ## Supported Algorithms
 - Algorithms
 	- Q-Learning
-	- TD-Learning (without eligibility trace, Experimental)
+	- TD-Learning (without eligibility trace)
+	- Simple Model-based RL agent
+ 
 
 ## Requirenment
 - numpy
