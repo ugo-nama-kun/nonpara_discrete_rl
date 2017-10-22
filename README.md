@@ -46,11 +46,11 @@ print qlean.get_q_value()
 Please see ```/example``` for more detail 
 
 ## NOTE: Initial Motivation
-Usually the implementation of the RL algorithms with table representations are started with the definition of the Q-table with given state and action space size (|S| and |A|). I remember that I wrote those definition when I implemented the first Q-Learning experiment in my computer 💻
+Usually the implementation of RL algorithms with table representations are started with the definition of the Q-table with given state and action space size (|S| and |A|). I remember that I wrote those definition when I implemented the first Q-Learning experiment in my computer 💻
 
 Usually agents do not know |S| and |A| in advance, but the naiive table implementation requires these values. The reinforcement learning theory (for finite-state MDP) requires the finiteness of states and actions of environment, but it is not necessarily explicit for agents. So this is a prior knowledge for the agent. In this time, I implemented RL algorithms to remove this requirement 👍
 
-I think this is an implementation of a kind of the kernel-based reinforcement learning, more sophisticated non-parametric RL algorithms (like Pritzel (2017), Engel (2005)) will be preferred for more complex environment (like visual navigation tasks). Although this implementation only supports classic RL algorithms, this experience has deepen my understnding of the connection between the table-based RL and the kernel-based RL 😊
+I think this is an implementation of a kind of the kernel-based reinforcement learning, more sophisticated non-parametric RL algorithms (like Pritzel (2017), Engel (2005)) will be preferred for more complex environment (like visual navigation tasks). Although this implementation only supports classic RL algorithms, this experience has deepen my understnding of the connection between the table-based RL, the kernel-based RL and the deep RL 😊
 
 
 ----
