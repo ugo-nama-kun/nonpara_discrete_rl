@@ -36,10 +36,16 @@ class ModelBased(object):
                  maximum_state_id=10000):
         """ Model-based RL Learning Agent
 
-        :param float discount_factor: discount factor [0, 1)
-        :param float exploration_rate: exploration rate in the e-greedy policy
-        :param int maximum_state_id: maximum number of states that the agent generates
+        :param float discount_factor: Discount factor [0, 1)
+        :param float exploration_rate: Exploration rate in the e-greedy policy [0, 1)
+        :param float exploration_rate_test: exploration rate in the e-greedy policy at test situation [0, 1)
+        :param float exploration_reward: A reward associated with the unvisited state-action pair. This is the directed drive for the exploration like R-max.
+        :param int vi_iteration: Maximum number of iteration of the value iteration
+        :param float vi_error_limit: Maximum error limit in the value iteration. [0, inf)
+        :param int vi_interval: This value define how often execute the value iteration
+        :param int maximum_state_id: Maximum number of states that the agent generates
         """
+
 
         # Model Description
         # {
