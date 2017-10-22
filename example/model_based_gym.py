@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+"""
+Gym cart pole experiment
+
+# TODO: Currently fails to learn. Need update.
+"""
+
 from nprl import ModelBased
 import gym
 import numpy as np
