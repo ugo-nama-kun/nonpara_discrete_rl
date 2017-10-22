@@ -24,7 +24,7 @@ python setup.py install
 
 ## How to use
 ```python
-from nprl.q_learning import QLearning
+from nprl import QLearning
 
 # Initialization
 qlean = QLearning(initial_q_value=0.0,
