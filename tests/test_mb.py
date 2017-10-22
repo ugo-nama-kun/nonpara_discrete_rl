@@ -212,11 +212,12 @@ class BasicTestSuite(unittest.TestCase):
 
         print mb._model
 
-        action, value = mb._get_greedy_action(state="one",
-                                              action_list=action_list)
+        action, value, value_list = mb._get_greedy_action(state="one",
+                                                          action_list=action_list,
+                                                          value_function=mb._value_function)
 
-        self.assertEquals(action, 1)
-        self.assertEquals(value, 3.0)
+        self.assertAlmostEquals(action, 1, delta=0.01)
+        self.assertAlmostEquals(value, 3.0, delta=0.01)
 
     def test_get_action_list(self):
         mb = ModelBased()
@@ -299,8 +300,14 @@ class BasicTestSuite(unittest.TestCase):
                          action_list=action_list)
 
         mb._value_iteration()
-        self.assertEquals(mb._value_function,
-                          {"one": 0.0, "two": 0.0, "three": 1.0})
+        target_vf = {"one": 0.0, "two": 0.0, "three": 1.0}
+
+        print "target : {}".format(target_vf)
+        print mb._value_function
+
+        for key in target_vf.keys():
+            self.assertAlmostEquals(mb._value_function[key],
+                                    target_vf[key])
 
     def test_value_iteration2(self):
         # Value Iteration Test including the untried action
@@ -355,8 +362,14 @@ class BasicTestSuite(unittest.TestCase):
                          action_list=action_list)
 
         mb._value_iteration()
-        self.assertEquals(mb._value_function,
-                          {"one": 0.0, "two": 0.0, "three": 10.0})
+        target_vf = {"one": 0.0, "two": 0.0, "three": 10.0}
+
+        print "target : {}".format(target_vf)
+        print mb._value_function
+        for state in target_vf.keys():
+            self.assertAlmostEquals(mb._value_function[state],
+                                    target_vf[state],
+                                    delta=0.1)
 
     def test_value_iteration3(self):
         # Value Iteration Test including the terminal state
@@ -424,10 +437,12 @@ class BasicTestSuite(unittest.TestCase):
                          action_list=action_list)
 
         mb._value_iteration()
-
         vf = {"one": 0.25, "two": 0.5, "three": 1.0, "four": 0.0}
+
+        print "target : {}".format(vf)
+        print mb._value_function
         for key in vf.keys():
-            self.assertAlmostEquals(mb._value_function[key], vf[key], delta=0.001)
+            self.assertAlmostEquals(mb._value_function[key], vf[key], delta=0.01)
 
     def test_value_iteration4(self):
         # Value Iteration Test in the three-state two-action MDP
@@ -535,6 +550,9 @@ class BasicTestSuite(unittest.TestCase):
 
         mb._value_iteration()
         vf = {"one": 1.1428, "two": 4.2857, "three": 10.5714}
+
+        print "target : {}".format(vf)
+        print mb._value_function
         for key in vf.keys():
             self.assertAlmostEquals(mb._value_function[key], vf[key], delta=0.01)
 
@@ -549,7 +567,6 @@ class BasicTestSuite(unittest.TestCase):
                          reward=None,
                          terminal=False,
                          action_list=action_list)
-
 
         state = "one"
         action = 0
@@ -608,7 +625,6 @@ class BasicTestSuite(unittest.TestCase):
                          reward=None,
                          terminal=False,
                          action_list=action_list)
-
 
         # Action 0
         state = "one"

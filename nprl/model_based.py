@@ -23,13 +23,13 @@ logger.propagate = False
 
 
 class ModelBased(object):
-    NULL_ACTION = 0
+    NULL_ACTION = "null action"
 
     def __init__(self,
                  discount_factor=0.95,
                  exploration_rate=0.2,
                  exploration_rate_test=0.05,
-                 exploration_reward=1.0,
+                 exploration_reward=0.0,
                  vi_iteration=100,
                  vi_error_limit=0.01,
                  vi_interval=1,
@@ -62,7 +62,7 @@ class ModelBased(object):
         self._discount_factor = discount_factor
         self.exploration_rate = exploration_rate
         self.exploration_rate_test = exploration_rate_test
-        self._initial_value = 0.0
+        self._initial_value = np.random.normal
         self._exploration_reward = exploration_reward
         self._maximum_state_id = maximum_state_id
 
@@ -76,7 +76,7 @@ class ModelBased(object):
         self._vf_interval = vi_interval
 
     def init(self):
-        """ Initialize agent to the initial status
+        """ Initialize agent to the initial status. Execute ony once before the experiment
 
         :return:
         """
@@ -132,13 +132,8 @@ class ModelBased(object):
             state = state_action[0]
             action = state_action[1]
 
-            # Update Table
-            #print state, action, next_state
-            # self._update_table(state, action, next_state, action_list, terminal)
-
             # Update the transition model given the table model. The "unknown" state only can change to "known" in this process
             self._update_transition_table(state, action, next_state, terminal)
-
 
             # Update the transition statistics
             self._model[state][action]["__count"] += 1
@@ -151,23 +146,6 @@ class ModelBased(object):
             alpha = 1.0 / float(self._model[state][action]["__count"])
             reward_prev = self._model[state][action]["__reward"]
             self._model[state][action]["__reward"] = alpha * reward + (1.0 - alpha) * reward_prev
-
-    # def _update_table(self, state, action, next_state, action_list, terminal):
-    #     """ Update the form of the table model
-    #
-    #     :param state:
-    #     :param action:
-    #     :param next_state:
-    #     :param action_list: action set at the "next_state": A(s)
-    #     :param terminal:
-    #     :return:
-    #     """
-    #
-    #     # Update and grow the model table if necessary. But the added tables are "unknown" status
-    #     self._update_table_state_action(state, action_list)
-    #
-    #     # Update the transition model given the table model. The "unknown" state only can change to "known" in this process
-    #     self._update_transition_table(state, action, next_state, terminal)
 
     def _update_table_state_action(self, state, action_list):
         """ Update the table of the model.
@@ -199,7 +177,7 @@ class ModelBased(object):
         :return:
         """
         self._model.update({state: {}})
-        self._value_function.update({state: self._initial_value})
+        self._value_function.update({state: self._initial_value(loc=0.0, scale=1e-5)})
 
     def _add_new_action(self, state, action):
         """ Add a new action in the model table
@@ -254,17 +232,18 @@ class ModelBased(object):
             if random.random() < self.exploration_rate_test:
                 return random.choice(action_list)
             else:
-                action, _ = self._get_greedy_action(state, action_list)
+                action, _, v_list = self._get_greedy_action(state, action_list, self._value_function)
                 return action
         else:
             # In training phase, epsilon-greedy
             if random.random() < self.exploration_rate:
                 return random.choice(action_list)
             else:
-                action, _ = self._get_greedy_action(state, action_list)
+                action, _, v_list = self._get_greedy_action(state, action_list, self._value_function)
+                #logger.debug("Value list : {}".format(v_list))
                 return action
 
-    def _get_greedy_action(self, state, action_list):
+    def _get_greedy_action(self, state, action_list, value_function):
         """ Obtain a greedy action wrt the current model on the given state and an action list
 
         :param state:
@@ -272,15 +251,7 @@ class ModelBased(object):
         :return:
         """
         # In test phase, get greedy action from VF and model
-
-        # If the given state is known as a terminal state
-        if state in self._terminal_state_set:
-            best_action = self.NULL_ACTION
-            best_value = 0.0
-            return best_action, best_value
-
-        best_value = -np.inf
-        best_action = None
+        value_list = []
         for a in action_list:
             # Calculate value
             if self._model[state][a]["__status"] == "known":
@@ -288,17 +259,21 @@ class ModelBased(object):
                 v_ = 0.0
                 for next_state in self._get_next_state_list(state, a):
                     p_sas = self._model[state][a][next_state]["__count"] / self._model[state][a]["__count"]
-                    v_ += p_sas * self._value_function[next_state]
+                    v_ += p_sas * value_function[next_state]
                 value = r + self._discount_factor * v_
             else:
                 # Set a default value as an exploration parameter if (s,a) set have never been executed
-                value = self._exploration_reward
+                value = np.random.normal(loc=self._exploration_reward, scale=1e-5)
 
-            # Compare
-            if best_value < value:
-                best_action = a
-                best_value = value
-        return best_action, best_value
+            value_list.append(value)
+
+        # Obtain the best action
+        value_list = np.array(value_list)
+        a_list = np.array(action_list)
+
+        best_value = value_list.max()
+        best_action = np.random.choice(a_list[value_list == best_value])
+        return best_action, best_value, value_list
 
     def _get_next_state_list(self, state, action):
         """ Obtain the next_state list given a state and an action
@@ -326,16 +301,20 @@ class ModelBased(object):
 
         """
         # Naive implementation of value iteration
+        vf = copy.deepcopy(self._value_function)
+
         for n in range(self._vi_max_iteration):
             max_error = 0.0
             for state in self._value_function.keys():
-                v = copy.deepcopy(self._value_function[state])
-                _, max_v = self._get_greedy_action(state=state,
-                                                   action_list=self._get_action_set(state))
-                self._value_function[state] = copy.deepcopy(max_v)
+                v = vf[state]
+                _, max_v, __ = self._get_greedy_action(state=state,
+                                                       action_list=self._get_action_set(state),
+                                                       value_function=vf)
+                vf[state] = copy.deepcopy(max_v)
                 max_error = np.max([max_error, np.abs(v - max_v)])
             if max_error < self._vi_error_limit:
                 break
+        self._value_function = copy.deepcopy(vf)
 
     def step(self, new_state, reward, terminal, action_list, test=False):
         """ Take a single step of the agent
@@ -366,9 +345,9 @@ class ModelBased(object):
                 self._update_step += 1
 
         # Take an action
-        new_action = np.random.choice(action_list)
-        if self._state_action:
-            new_action = self._get_action(new_state, action_list, test)
+        # new_action = np.random.choice(action_list)
+        # if self._state_action:
+        new_action = self._get_action(new_state, action_list, test)
 
         self._state_action = (new_state, new_action)
         return new_action
@@ -379,6 +358,9 @@ class ModelBased(object):
         :return: environment model dictionary
         """
         return self._model
+
+    def get_value_function(self):
+        return self._value_function
 
     def save_model(self):
         """ Save model as "model.json" at the current directory
@@ -454,28 +436,32 @@ class ModelBased(object):
             node_color.update({state: color_names[colors[i]]})
 
         # Draw states
+        labels = {}
         with g.subgraph(name='cluster_0') as c:
             c.attr(style='filled')
             c.attr(color='lightgrey')
             c.attr(label="Terminal")
             for state in state_list:
                 g.attr('node', style='filled', color=node_color[state], shape='circle')
+                v = np.round(self._value_function[state] * 1000.0)/1000.0
+                s_label = str(state) + " , " + str(v)
+                labels.update({state: s_label})
                 if state in self._terminal_state_set:
                     c.attr('node', style='filled', color="white", shape='circle')
-                    c.node(str(state))
+                    c.node(s_label)
                 else:
-                    g.node(str(state))
+                    g.node(s_label)
 
         # Draw edges
         for state in state_list:
             for action in self._get_action_set(state):
                 if self._model[state][action]["__status"] == "known":
                     for next_state in self._get_next_state_list(state, action):
-                        g.edge(str(state), str(next_state), label=str(action))
+                        g.edge(labels[state], labels[next_state], label=str(action))
                 else:
                     # Create an "unknown" state if necessary
                     if state not in self._terminal_state_set:
                         g.attr('node', style='filled', color='gray', shape='circle')
-                        g.edge(str(state), "unknown", label=str(action), fontsize="10.0")
+                        g.edge(labels[state], "unknown", label=str(action), fontsize="10.0")
 
-        g.view(filename="environment")
+        g.view(filename="environment.dot")
