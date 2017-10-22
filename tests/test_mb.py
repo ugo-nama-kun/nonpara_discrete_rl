@@ -518,6 +518,108 @@ class BasicTestSuite(unittest.TestCase):
         mb.load_model()
         self.assertEquals(model_, mb._model)
 
+    def test_plot_model(self):
+        mb = ModelBased(discount_factor=0.5)
+
+        # Action 0
+        state = "one"
+        action = 0
+        reward = -1.0
+        terminal = False
+        next_state = "two"
+        action_list = [0, 1]
+
+        mb._update_model(state_action=(state, action),
+                         next_state=next_state,
+                         reward=reward,
+                         terminal=terminal,
+                         action_list=action_list)
+
+        state = "two"
+        action = 0
+        reward = -1.0
+        terminal = False
+        next_state = "three"
+        action_list = [0, 1]
+
+        mb._update_model(state_action=(state, action),
+                         next_state=next_state,
+                         reward=reward,
+                         terminal=terminal,
+                         action_list=action_list)
+
+        state = "three"
+        action = 0
+        reward = 50.0
+        terminal = False
+        next_state = "one"
+        action_list = [0, 1]
+
+        mb._update_model(state_action=(state, action),
+                         next_state=next_state,
+                         reward=reward,
+                         terminal=terminal,
+                         action_list=action_list)
+
+        # Action 1
+        state = "one"
+        action = 1
+        reward = -10
+        terminal = False
+        next_state = "three"
+        action_list = [0, 1]
+
+        mb._update_model(state_action=(state, action),
+                         next_state=next_state,
+                         reward=reward,
+                         terminal=terminal,
+                         action_list=action_list)
+
+        state = "three"
+        action = 1
+        reward = +1.0
+        terminal = False
+        next_state = "two"
+        action_list = [0, 1]
+
+        mb._update_model(state_action=(state, action),
+                         next_state=next_state,
+                         reward=reward,
+                         terminal=terminal,
+                         action_list=action_list)
+
+        state = "three"
+        action = 0
+        reward = 0.0
+        terminal = True
+        next_state = "five"
+        action_list = [0, 1]
+
+        mb._update_model(state_action=(state, action),
+                         next_state=next_state,
+                         reward=reward,
+                         terminal=terminal,
+                         action_list=action_list)
+
+        state = "two"
+        action = 1
+        reward = +3.0
+        terminal = False
+        next_state = "one"
+        action_list = [0, 1, 2]
+
+        mb._update_model(state_action=(state, action),
+                         next_state=next_state,
+                         reward=reward,
+                         terminal=terminal,
+                         action_list=action_list)
+
+        print mb._model
+        mb._value_iteration()
+
+        print mb._value_function
+        mb.show_model()
+
 
 if __name__ == '__main__':
     unittest.main()

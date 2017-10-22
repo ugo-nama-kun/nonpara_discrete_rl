@@ -48,6 +48,7 @@ class ModelBased(object):
         #               {"__count": n_sas},
         #           "__count": n_sa,
         #           "__reward": reward estimation
+        #           "__status": "known" OR "unknown"
         #           }
         #       }
         #   }
@@ -171,6 +172,10 @@ class ModelBased(object):
         else:
             # if state have never seen experienced until now
             self._add_new_state(state)
+
+            # Check whether the state space is smaller than the limit
+            assert len(self._model.keys()) < self._maximum_state_id, "Too much state. The number of states exceed the limit. : |S| > {}".format(self._maximum_state_id)
+
             for a in action_list:
                 self._add_new_action(state, a)
 
@@ -208,18 +213,16 @@ class ModelBased(object):
         """
 
         if terminal and not (next_state in self._terminal_state_set):
-            # next_state is the terminal state. this is a special state
             self._model[state][action].update({next_state: {"__count": 0}})
 
             # Add next state in the terminal set
             self._terminal_state_set.add(next_state)
-            return
 
-        if not next_state in self._model[state][action].keys():
+        if next_state not in self._model[state][action].keys():
             # Add next state subsequent to the state-action
             self._model[state][action].update({next_state: {"__count": 0}})
 
-        if not next_state in self._model.keys():
+        if next_state not in self._model.keys():
             # Add next state is it is unknown state
             self._add_new_state(next_state)
 
@@ -390,4 +393,71 @@ class ModelBased(object):
 
         :return:
         """
+        # Model Description
+        # {
+        #   state:
+        #       {action:
+        #           {next_state:
+        #               {"__count": n_sas},
+        #           "__count": n_sa,
+        #           "__reward": reward estimation
+        #           "__status": "known" OR "unknown"
+        #           }
+        #       }
+        #   }
+        # }
 
+        from graphviz import Digraph
+
+        color_names = ["#0000FF",  # blue
+                       "#1E90FF",
+                       "#ADD8E6",
+                       "#AFEEEE",
+                       "#F5F5F5",  # zero
+                       "#FFDAB9",
+                       "#FFA07A",
+                       "#FA8072",
+                       "#FF0000"]  # red
+
+        g = Digraph()
+        state_list = self._model.keys()
+
+        # Get Colors
+        colors = np.array(self._value_function.values(), dtype=np.float32)
+        # normalize color
+        colors = 4 * np.clip(colors / np.max(np.abs([colors.max(), np.abs(colors.min())])),
+                             a_max=1,
+                             a_min=-1)
+        colors = 4 + np.rint(colors).astype(np.uint8)
+
+        node_color = {}
+        for i, state in enumerate(state_list):
+            print i, state
+            print colors[i]
+            node_color.update({state: color_names[colors[i]]})
+
+        # Draw states
+        with g.subgraph(name='cluster_0') as c:
+            c.attr(style='filled')
+            c.attr(color='lightgrey')
+            c.attr(label="Terminal")
+            for state in state_list:
+                g.attr('node', style='filled', color=node_color[state])
+                if state in self._terminal_state_set:
+                    c.attr('node', style='filled', color="white")
+                    c.node(state)
+                else:
+                    g.node(state)
+
+        # Draw edges
+        for state in state_list:
+            for action in self._get_action_set(state):
+                if self._model[state][action]["__status"] == "known":
+                    for next_state in self._get_next_state_list(state, action):
+                        g.edge(state, next_state)
+                else:
+                    # Create an "unknown" state if necessary
+                    g.attr('node', style='filled', color='gray')
+                    g.edge(state, "unknown")
+
+        g.view()
