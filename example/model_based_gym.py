@@ -19,11 +19,13 @@ env = gym.make('CartPole-v0')
 n_tick = np.array([1, 1, 6, 3], dtype=np.float32)
 tick = env.observation_space.high - env.observation_space.low
 tick[1] = 1.0
-tick[3] = 2*math.radians(50)
+tick[3] = 2 * math.radians(50)
 tick = tick / n_tick
 lower_bound = env.observation_space.low
 lower_bound[1] = -0.5
 lower_bound[3] = -math.radians(50)
+
+
 def encoder(obs):
     state = []
     for i in range(env.observation_space.shape[0]):
@@ -63,7 +65,7 @@ episode_time = 0
 episode = 0
 while True:
 
-    #env.render()
+    # env.render()
 
     if terminal:
         agent.reset()
@@ -72,7 +74,7 @@ while True:
         reward = 1.0
         terminal = False
 
-        #agent.exploration_rate = max(0.05, min(1.0, 1.0 - np.log10((episode+1.0)/25)))
+        # agent.exploration_rate = max(0.05, min(1.0, 1.0 - np.log10((episode+1.0)/25)))
 
         # Plot result
         result.append(episode_time)
@@ -99,12 +101,11 @@ while True:
         print reward, terminal
         episode_time += 1
 
-    if not terminal:
-        action = agent.step(new_state=encoder(obs),
-                            reward=reward,
-                            terminal=terminal,
-                            action_list=range(env.action_space.n),
-                            test=False)
+    action = agent.step(new_state=encoder(obs),
+                        reward=reward,
+                        terminal=terminal,
+                        action_list=range(env.action_space.n),
+                        test=False)
 
     print "action : ", action
     print "state : ", encoder(obs)
