@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .context import nprl
-
+from nprl.td import TDLearning
 import unittest
 
 
@@ -9,7 +8,6 @@ class BasicTestSuite(unittest.TestCase):
     """Basic test cases."""
 
     def test_run_td(self):
-        from nprl.td import TDLearning
 
         td = TDLearning(gamma=0.5, maximum_state_id=None)
 

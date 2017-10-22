@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from nprl import QLearning
+from nprl import ModelBased
 
 
 # Environment : T-maze
@@ -42,7 +42,7 @@ class GridEnv(object):
                 self.state = 3
             elif action == "right":
                 self.state = 2
-                reward = 1.0
+                reward = 10.0
                 terminal = True
                 print("Success")
             elif action == "left":
@@ -54,13 +54,12 @@ class GridEnv(object):
         return self.state, reward, terminal
 
 if __name__ == '__main__':
+
+    n_episode = 10
+
     # Create Agent
-    qlean = QLearning(initial_q_value=0.0,
-                      exploration_rate=1.0,
-                      lr=0.01,
-                      discount_factor=0.5,
-                      initial_fluctuation=True)
-    qlean.reset()
+    agent = ModelBased(discount_factor=0.5)
+    agent.init()
 
     # Create Environment
     env = GridEnv()
@@ -69,7 +68,7 @@ if __name__ == '__main__':
     print("Start Grid Experiment")
     state, reward, terminal = env.reset()
 
-    action = qlean.step(new_state=state,
+    action = agent.step(new_state=state,
                         reward=reward,
                         terminal=terminal,
                         action_list=env.action_list,
@@ -77,11 +76,11 @@ if __name__ == '__main__':
     terminal = False
     episode_time = 0
     episode = 1
-    while episode < 1000:
+    while episode < n_episode:
 
         if terminal:
             # Reset agent for the next episode
-            qlean.reset()
+            agent.reset()
 
             # Reset environment
             state, reward, terminal = env.reset()
@@ -91,19 +90,24 @@ if __name__ == '__main__':
             episode_time = 0
             episode += 1
 
-            qlean.exploration_rate -= 10 ** -3
-            if qlean.exploration_rate < 0.01:
-                qlean.exploration_rate = 0.01
+            agent.exploration_rate -= 10 ** -3
+            if agent.exploration_rate < 0.01:
+                agent.exploration_rate = 0.01
         else:
             state, reward, terminal = env.step(action)
             episode_time += 1
 
         # Single Update
-        action = qlean.step(new_state=state,
+        print(state)
+        action = agent.step(new_state=state,
                             reward=reward,
                             terminal=terminal,
                             action_list=env.action_list,
                             test=False)
 
     print "Finish"
-    print qlean.get_q_value()
+    print "Environment Model", agent.get_model()
+    print "---"
+    print "Terminal States", agent._terminal_state_set
+    print "Value", agent.get_value_function()
+    agent.show_model()

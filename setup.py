@@ -11,8 +11,8 @@ with open('LICENSE') as f:
 
 setup(
     name='nprl',
-    version='0.1.0',
-    description='Example code of the TD learning and Q learning',
+    version='0.2.0',
+    description='Example code of the TD learning, Q learning and Model-based RL',
     long_description=readme,
     author='Naoto Yoshida',
     author_email='yossy0157@gmail.com',

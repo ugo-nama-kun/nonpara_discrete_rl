@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from nprl import QLearning
+"""
+Gym cart pole experiment
+
+# TODO: Currently fails to learn. Need update.
+"""
+
+from nprl import ModelBased
 import gym
 import numpy as np
 import math
@@ -32,16 +38,17 @@ def encoder(obs):
 
 
 # Create Agent
-qlean = QLearning(initial_q_value=0.0,
-                  exploration_rate=1.0,
-                  lr=1.0,
-                  discount_factor=0.99,
-                  initial_fluctuation=True)
-qlean.init()
+agent = ModelBased(discount_factor=0.95,
+                   exploration_rate=0.1,
+                   exploration_reward=0.0,
+                   vi_error_limit=0.01,
+                   vi_iteration=100,
+                   vi_interval=1)
+agent.init()
 
 obs = env.reset()
-action = qlean.step(new_state=encoder(obs),
-                    reward=0.0,
+action = agent.step(new_state=encoder(obs),
+                    reward=1.0,
                     terminal=False,
                     action_list=range(env.action_space.n),
                     test=False)
@@ -49,6 +56,7 @@ action = qlean.step(new_state=encoder(obs),
 result = []
 result_average = []
 t = []
+N = 1000
 
 terminal = False
 episode_time = 0
@@ -58,13 +66,13 @@ while True:
     #env.render()
 
     if terminal:
-        qlean.reset()
+        agent.reset()
+
         obs = env.reset()
         reward = 1.0
         terminal = False
 
-        qlean.lr = max(0.01, min(0.5, 1.0 - np.log10((episode+1.0)/25)))
-        qlean.exploration_rate = max(0.05, min(1.0, 1.0 - np.log10((episode+1.0)/25)))
+        #agent.exploration_rate = max(0.05, min(1.0, 1.0 - np.log10((episode+1.0)/25)))
 
         # Plot result
         result.append(episode_time)
@@ -77,9 +85,9 @@ while True:
             plt.clf()
             plt.plot(t, result_average, 'b')
             plt.hold(True)
-            plt.plot([0, 500], [200, 200], '-.r')
+            plt.plot([0, N], [200, 200], '-.r')
             plt.hold(False)
-            plt.xlim([0, 500])
+            plt.xlim([0, N])
             plt.ylim([0, 250])
             plt.pause(0.001)
 
@@ -88,21 +96,27 @@ while True:
         episode += 1
     else:
         obs, reward, terminal, info = env.step(action)
+        print reward, terminal
         episode_time += 1
 
-    if reward > 0 and terminal: # Pass the positive time-dependent terminal
-        pass
-    else:
-        action = qlean.step(new_state=encoder(obs),
+    if not terminal:
+        action = agent.step(new_state=encoder(obs),
                             reward=reward,
                             terminal=terminal,
                             action_list=range(env.action_space.n),
                             test=False)
-    #print(encoder(obs))
-    if episode == 500:
+
+    print "action : ", action
+    print "state : ", encoder(obs)
+    if episode == N:
         break
 
-print qlean.get_q_value()
 print ("Close plotting window to finish.")
+print "Environment Model", agent.get_model()
+print "---"
+print agent.get_value_function()
+print "Terminal States", agent._terminal_state_set
+agent.show_model()
+
 plt.show()
 print ("Finish. ")
