@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from nprl.q_learning import QLearning
+from nprl import QLearning
 import gym
 import numpy as np
 import math

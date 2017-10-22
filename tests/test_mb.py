@@ -100,6 +100,15 @@ class BasicTestSuite(unittest.TestCase):
                         exploration_rate=0.2,
                         maximum_state_id=200)
 
+        # Initial Step
+        state = "one"
+        action_list = [0, 1, 2]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
+
         # Check initial entry
         state = "one"
         action = 0
@@ -130,6 +139,12 @@ class BasicTestSuite(unittest.TestCase):
         terminal = True
         next_state = "two"
         action_list = [0]
+
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
         for i in range(10000):
             reward = np.random.normal(loc=0.0, scale=0.1)
             mb._update_model(state_action=(state, action),
@@ -146,6 +161,16 @@ class BasicTestSuite(unittest.TestCase):
         mb = ModelBased()
 
         # Check initial entry
+
+        # Initial Step
+        state = "one"
+        action_list = [0, 1, 2]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
+
         state = "one"
         action = 0
         reward = 1.0
@@ -197,6 +222,15 @@ class BasicTestSuite(unittest.TestCase):
         mb = ModelBased()
 
         # Check initial entry
+        # Initial Step
+        state = "one"
+        action_list = [0, 1, 2]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
+
         state = "one"
         action = 0
         reward = 1.0
@@ -215,6 +249,15 @@ class BasicTestSuite(unittest.TestCase):
 
     def test_value_iteration1(self):
         mb = ModelBased(discount_factor=0.0)
+
+        # Initial Step
+        state = "one"
+        action_list = [0]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
 
         state = "one"
         action = 0
@@ -263,6 +306,15 @@ class BasicTestSuite(unittest.TestCase):
         # Value Iteration Test including the untried action
         mb = ModelBased(discount_factor=0.0, exploration_reward=10.0)
 
+        # Initial Step
+        state = "one"
+        action_list = [0]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
+
         state = "one"
         action = 0
         reward = 0.0
@@ -281,7 +333,7 @@ class BasicTestSuite(unittest.TestCase):
         reward = 0.0
         terminal = False
         next_state = "three"
-        action_list = [0]
+        action_list = [0, 1]
 
         mb._update_model(state_action=(state, action),
                          next_state=next_state,
@@ -294,7 +346,7 @@ class BasicTestSuite(unittest.TestCase):
         reward = 0.0
         terminal = False
         next_state = "one"
-        action_list = [0, 1]
+        action_list = [0]
 
         mb._update_model(state_action=(state, action),
                          next_state=next_state,
@@ -309,6 +361,15 @@ class BasicTestSuite(unittest.TestCase):
     def test_value_iteration3(self):
         # Value Iteration Test including the terminal state
         mb = ModelBased(discount_factor=0.5)
+
+        # Initial Step
+        state = "one"
+        action_list = [0]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
 
         state = "one"
         action = 0
@@ -381,8 +442,16 @@ class BasicTestSuite(unittest.TestCase):
         # : print V0
         # output : [[  1.14285714][  4.28571429][ 10.57142857]]
 
-
         mb = ModelBased(discount_factor=0.5)
+
+        # Initial Step
+        state = "one"
+        action_list = [0, 1]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
 
         # Action 0
         state = "one"
@@ -472,6 +541,16 @@ class BasicTestSuite(unittest.TestCase):
     def test_save_load_model(self):
         mb = ModelBased(discount_factor=0.0)
 
+        # Initial Step
+        state = "one"
+        action_list = [0]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
+
+
         state = "one"
         action = 0
         reward = 0.0
@@ -520,6 +599,16 @@ class BasicTestSuite(unittest.TestCase):
 
     def test_plot_model(self):
         mb = ModelBased(discount_factor=0.5)
+
+        # Initial Step
+        state = "one"
+        action_list = [0, 1]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=False,
+                         action_list=action_list)
+
 
         # Action 0
         state = "one"

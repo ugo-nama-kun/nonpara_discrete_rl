@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from nprl import QLearning
+from nprl import ModelBased
 
 
 # Environment : T-maze
@@ -55,12 +55,8 @@ class GridEnv(object):
 
 if __name__ == '__main__':
     # Create Agent
-    qlean = QLearning(initial_q_value=0.0,
-                      exploration_rate=1.0,
-                      lr=0.01,
-                      discount_factor=0.5,
-                      initial_fluctuation=True)
-    qlean.reset()
+    agent = ModelBased()
+    agent.reset()
 
     # Create Environment
     env = GridEnv()
@@ -69,7 +65,7 @@ if __name__ == '__main__':
     print("Start Grid Experiment")
     state, reward, terminal = env.reset()
 
-    action = qlean.step(new_state=state,
+    action = agent.step(new_state=state,
                         reward=reward,
                         terminal=terminal,
                         action_list=env.action_list,
@@ -81,7 +77,7 @@ if __name__ == '__main__':
 
         if terminal:
             # Reset agent for the next episode
-            qlean.reset()
+            agent.reset()
 
             # Reset environment
             state, reward, terminal = env.reset()
@@ -91,19 +87,23 @@ if __name__ == '__main__':
             episode_time = 0
             episode += 1
 
-            qlean.exploration_rate -= 10 ** -3
-            if qlean.exploration_rate < 0.01:
-                qlean.exploration_rate = 0.01
+            agent.exploration_rate -= 10 ** -3
+            if agent.exploration_rate < 0.01:
+                agent.exploration_rate = 0.01
         else:
             state, reward, terminal = env.step(action)
             episode_time += 1
 
         # Single Update
-        action = qlean.step(new_state=state,
+        print(state)
+        action = agent.step(new_state=state,
                             reward=reward,
                             terminal=terminal,
                             action_list=env.action_list,
                             test=False)
 
     print "Finish"
-    print qlean.get_q_value()
+    print "Environment Model", agent.get_model()
+    print "---"
+    print "Terminal States", agent._terminal_state_set
+    agent.show_model()

@@ -32,6 +32,7 @@ class ModelBased(object):
                  exploration_reward=1.0,
                  vi_iteration=100,
                  vi_error_limit=0.01,
+                 vi_interval=1,
                  maximum_state_id=10000):
         """ Model-based RL Learning Agent
 
@@ -59,8 +60,8 @@ class ModelBased(object):
         self._terminal_state_set = set()
 
         self._discount_factor = discount_factor
-        self._exploration_rate = exploration_rate
-        self._exploration_rate_test = exploration_rate_test
+        self.exploration_rate = exploration_rate
+        self.exploration_rate_test = exploration_rate_test
         self._initial_value = 0.0
         self._exploration_reward = exploration_reward
         self._maximum_state_id = maximum_state_id
@@ -71,6 +72,8 @@ class ModelBased(object):
 
         # Initialization of parameters used in the algorithm
         self._state_action = None
+        self._update_step = 0
+        self._vf_interval = vi_interval
 
     def init(self):
         """ Initialize agent to the initial status
@@ -87,7 +90,7 @@ class ModelBased(object):
 
         :return:
         """
-        self.init()
+        self._state_action = None
 
     def _match_state(self, state):
         """ Hard matching of the state.
@@ -118,44 +121,53 @@ class ModelBased(object):
         :param next_state: the consequence of the action at the state
         :param float reward: the reward wrt the transition
         :param bool terminal: terminal flag if the next_state is a terminal state or not
-        :param list action_list:  action set at the state: A(s)
-        :return:
-        """
-
-        state = state_action[0]
-        action = state_action[1]
-
-        # Update Table
-        self._update_table(state, action, next_state, action_list, terminal)
-
-        # Update the transition statistics
-        self._model[state][action]["__count"] += 1
-        self._model[state][action][next_state]["__count"] += 1
-        # Set the (s, a) to the "known" status.
-        if self._model[state][action]["__status"] == "unknown":
-            self._model[state][action]["__status"] = "known"
-
-        # MLE Update of the reward statistics
-        alpha = 1.0 / float(self._model[state][action]["__count"])
-        reward_prev = self._model[state][action]["__reward"]
-        self._model[state][action]["__reward"] = alpha * reward + (1.0 - alpha) * reward_prev
-
-    def _update_table(self, state, action, next_state, action_list, terminal):
-        """ Update the form of the table model
-
-        :param state:
-        :param action:
-        :param next_state:
-        :param action_list:
-        :param terminal:
+        :param list action_list:  action set at the "next_state": A(s)
         :return:
         """
 
         # Update and grow the model table if necessary. But the added tables are "unknown" status
-        self._update_table_state_action(state, action_list)
+        self._update_table_state_action(next_state, action_list)
 
-        # Update the transition model given the table model. The "unknown" state only can change to "known" in this process
-        self._update_transition_table(state, action, next_state, terminal)
+        if state_action:
+            state = state_action[0]
+            action = state_action[1]
+
+            # Update Table
+            #print state, action, next_state
+            # self._update_table(state, action, next_state, action_list, terminal)
+
+            # Update the transition model given the table model. The "unknown" state only can change to "known" in this process
+            self._update_transition_table(state, action, next_state, terminal)
+
+
+            # Update the transition statistics
+            self._model[state][action]["__count"] += 1
+            self._model[state][action][next_state]["__count"] += 1
+            # Set the (s, a) to the "known" status.
+            if self._model[state][action]["__status"] == "unknown":
+                self._model[state][action]["__status"] = "known"
+
+            # MLE Update of the reward statistics
+            alpha = 1.0 / float(self._model[state][action]["__count"])
+            reward_prev = self._model[state][action]["__reward"]
+            self._model[state][action]["__reward"] = alpha * reward + (1.0 - alpha) * reward_prev
+
+    # def _update_table(self, state, action, next_state, action_list, terminal):
+    #     """ Update the form of the table model
+    #
+    #     :param state:
+    #     :param action:
+    #     :param next_state:
+    #     :param action_list: action set at the "next_state": A(s)
+    #     :param terminal:
+    #     :return:
+    #     """
+    #
+    #     # Update and grow the model table if necessary. But the added tables are "unknown" status
+    #     self._update_table_state_action(state, action_list)
+    #
+    #     # Update the transition model given the table model. The "unknown" state only can change to "known" in this process
+    #     self._update_transition_table(state, action, next_state, terminal)
 
     def _update_table_state_action(self, state, action_list):
         """ Update the table of the model.
@@ -239,14 +251,14 @@ class ModelBased(object):
         """
 
         if test:
-            if random.random() < self._exploration_rate_test:
+            if random.random() < self.exploration_rate_test:
                 return random.choice(action_list)
             else:
                 action, _ = self._get_greedy_action(state, action_list)
                 return action
         else:
             # In training phase, epsilon-greedy
-            if random.random() < self._exploration_rate:
+            if random.random() < self.exploration_rate:
                 return random.choice(action_list)
             else:
                 action, _ = self._get_greedy_action(state, action_list)
@@ -335,24 +347,28 @@ class ModelBased(object):
         :param bool test:
         :return:
         """
-        assert len(
-            action_list) > 0, "action_list has to have at least one action"
+        assert len(action_list) > 0, "action_list has to have at least one action"
 
         # Expand dictionary if new_state is unknown
         if not test:
-            if self._state_action is not None:
-                # Model Updating
-                self._update_model(self._state_action,
-                                   new_state,
-                                   reward,
-                                   terminal,
-                                   action_list)
+            # Model Updating
+            self._update_model(self._state_action,
+                               new_state,
+                               reward,
+                               terminal,
+                               action_list)
 
-                # Value Function Update
+            # Value Function Update
+            if self._update_step > self._vf_interval:
                 self._value_iteration()
+                self._update_step = 0
+            else:
+                self._update_step += 1
 
         # Take an action
-        new_action = self._get_action(new_state, action_list, test)
+        new_action = np.random.choice(action_list)
+        if self._state_action:
+            new_action = self._get_action(new_state, action_list, test)
 
         self._state_action = (new_state, new_action)
         return new_action
@@ -420,6 +436,9 @@ class ModelBased(object):
                        "#FF0000"]  # red
 
         g = Digraph()
+        g.attr(size="5.0", fontsize="10.0")
+        g.attr('edge', fontsize="10.0")
+
         state_list = self._model.keys()
 
         # Get Colors
@@ -432,8 +451,6 @@ class ModelBased(object):
 
         node_color = {}
         for i, state in enumerate(state_list):
-            print i, state
-            print colors[i]
             node_color.update({state: color_names[colors[i]]})
 
         # Draw states
@@ -442,22 +459,23 @@ class ModelBased(object):
             c.attr(color='lightgrey')
             c.attr(label="Terminal")
             for state in state_list:
-                g.attr('node', style='filled', color=node_color[state])
+                g.attr('node', style='filled', color=node_color[state], shape='circle')
                 if state in self._terminal_state_set:
-                    c.attr('node', style='filled', color="white")
-                    c.node(state)
+                    c.attr('node', style='filled', color="white", shape='circle')
+                    c.node(str(state))
                 else:
-                    g.node(state)
+                    g.node(str(state))
 
         # Draw edges
         for state in state_list:
             for action in self._get_action_set(state):
                 if self._model[state][action]["__status"] == "known":
                     for next_state in self._get_next_state_list(state, action):
-                        g.edge(state, next_state)
+                        g.edge(str(state), str(next_state), label=str(action))
                 else:
                     # Create an "unknown" state if necessary
-                    g.attr('node', style='filled', color='gray')
-                    g.edge(state, "unknown")
+                    if state not in self._terminal_state_set:
+                        g.attr('node', style='filled', color='gray', shape='circle')
+                        g.edge(str(state), "unknown", label=str(action), fontsize="10.0")
 
-        g.view()
+        g.view(filename="environment")
