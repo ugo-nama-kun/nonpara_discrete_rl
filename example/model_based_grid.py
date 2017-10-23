@@ -42,7 +42,7 @@ class GridEnv(object):
                 self.state = 3
             elif action == "right":
                 self.state = 2
-                reward = 10.0
+                reward = 1.0
                 terminal = True
                 print("Success")
             elif action == "left":
@@ -58,7 +58,8 @@ if __name__ == '__main__':
     n_episode = 10
 
     # Create Agent
-    agent = ModelBased(discount_factor=0.5)
+    agent = ModelBased(discount_factor=0.5,
+                       exploration_reward=2.0)
     agent.init()
 
     # Create Environment
@@ -75,7 +76,7 @@ if __name__ == '__main__':
                         test=False)
     terminal = False
     episode_time = 0
-    episode = 1
+    episode = 0
     while episode < n_episode:
 
         if terminal:

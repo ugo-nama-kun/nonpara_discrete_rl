@@ -34,16 +34,18 @@ class BasicTestSuite(unittest.TestCase):
         state = 0
         action = 0
         action_list = [0, 1, 2]
-        mb._update_table_state_action(state, action_list)
+        terminal = False
+
+        mb._update_table_state_action(state, action_list, terminal)
         self.assertEquals(mb._model[state].keys(), action_list)
 
         # Check the second entry with same action_list
-        mb._update_table_state_action(state, action_list)
+        mb._update_table_state_action(state, action_list, terminal)
         self.assertEquals(mb._model[state].keys(), action_list)
 
         # Check the second entry with different action_list
         action_list.append(3)
-        mb._update_table_state_action(state, action_list)
+        mb._update_table_state_action(state, action_list, terminal)
         self.assertEquals(mb._model[state].keys(), action_list)
 
     def test_update_transition_table(self):
@@ -55,18 +57,17 @@ class BasicTestSuite(unittest.TestCase):
         state = 0
         action = 0
         action_list = [0, 1, 2]
+        terminal = False
 
-        mb._update_table_state_action(state, action_list)
+        mb._update_table_state_action(state, action_list, terminal)
 
         # Check update of the transition table
         mb._update_transition_table(state,
                                     action,
-                                    next_state=1,
-                                    terminal=False)
+                                    next_state=1)
         mb._update_transition_table(state,
                                     action,
-                                    next_state=2,
-                                    terminal=False)
+                                    next_state=2)
 
         target = {1: {"__count": 0},
                   2: {"__count": 0},
@@ -80,8 +81,7 @@ class BasicTestSuite(unittest.TestCase):
         # Check adding the Terminal State
         mb._update_transition_table(state,
                                     action,
-                                    next_state=3,
-                                    terminal=True)
+                                    next_state=3)
 
         target = {1: {"__count": 0},
                   2: {"__count": 0},
@@ -93,7 +93,6 @@ class BasicTestSuite(unittest.TestCase):
 
         self.assertEquals(mb._model[state][action],
                           target)
-        self.assertTrue(3 in mb._terminal_state_set)
 
     def test_model_update(self):
         mb = ModelBased(discount_factor=0.5,
@@ -128,6 +127,22 @@ class BasicTestSuite(unittest.TestCase):
         self.assertEquals(mb._model[state][action]["__count"], 1)
         self.assertEquals(mb._model[state][action][next_state]["__count"], 1)
         self.assertEquals(mb._model[state][action]["__reward"], reward)
+
+    def test_add_terminal(self):
+        mb = ModelBased(discount_factor=0.5,
+                        exploration_rate=0.2,
+                        maximum_state_id=200)
+
+        # Initial Step
+        state = "one"
+        action_list = [0, 1, 2]
+        mb._update_model(state_action=None,
+                         next_state=state,
+                         reward=None,
+                         terminal=True,
+                         action_list=action_list)
+
+        self.assertTrue(state in mb._terminal_state_set)
 
     def test_approx_reward(self):
         """ Approximate reward: mean zero

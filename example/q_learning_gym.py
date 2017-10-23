@@ -68,20 +68,16 @@ while True:
 
         # Plot result
         result.append(episode_time)
+        t.append(episode)
 
-        if episode % 10 == 0:
-            t.append(episode)
-            result_average.append(np.mean(result))
-            result = []
-
-            plt.clf()
-            plt.plot(t, result_average, 'b')
-            plt.hold(True)
-            plt.plot([0, 500], [200, 200], '-.r')
-            plt.hold(False)
-            plt.xlim([0, 500])
-            plt.ylim([0, 250])
-            plt.pause(0.001)
+        plt.clf()
+        plt.plot(t, result, 'b')
+        plt.hold(True)
+        plt.plot([0, 500], [200, 200], '-.r')
+        plt.hold(False)
+        plt.xlim([0, 500])
+        plt.ylim([0, 250])
+        plt.pause(0.001)
 
         print("{}-th EPISODE : {} steps".format(episode, episode_time))
         episode_time = 0
@@ -90,7 +86,7 @@ while True:
         obs, reward, terminal, info = env.step(action)
         episode_time += 1
 
-    if reward > 0 and terminal: # Pass the positive time-dependent terminal
+    if episode_time >= 200 and terminal: # Pass the positive time-dependent terminal
         pass
     else:
         action = qlean.step(new_state=encoder(obs),

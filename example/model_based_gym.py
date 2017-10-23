@@ -40,8 +40,8 @@ def encoder(obs):
 
 
 # Create Agent
-agent = ModelBased(discount_factor=0.95,
-                   exploration_rate=0.1,
+agent = ModelBased(discount_factor=0.99,
+                   exploration_rate=0.05,
                    exploration_reward=0.0,
                    vi_error_limit=0.01,
                    vi_iteration=100,
@@ -52,13 +52,12 @@ obs = env.reset()
 action = agent.step(new_state=encoder(obs),
                     reward=1.0,
                     terminal=False,
-                    action_list=range(env.action_space.n),
-                    test=False)
+                    action_list=range(env.action_space.n))
 
 result = []
 result_average = []
 t = []
-N = 1000
+N = 250
 
 terminal = False
 episode_time = 0
@@ -74,24 +73,20 @@ while True:
         reward = 1.0
         terminal = False
 
-        # agent.exploration_rate = max(0.05, min(1.0, 1.0 - np.log10((episode+1.0)/25)))
+        agent.exploration_rate = max(0.05, min(1.0, 1.0 - np.log10((episode+1.0)/25)))
 
         # Plot result
         result.append(episode_time)
+        t.append(episode)
 
-        if episode % 10 == 0:
-            t.append(episode)
-            result_average.append(np.mean(result))
-            result = []
-
-            plt.clf()
-            plt.plot(t, result_average, 'b')
-            plt.hold(True)
-            plt.plot([0, N], [200, 200], '-.r')
-            plt.hold(False)
-            plt.xlim([0, N])
-            plt.ylim([0, 250])
-            plt.pause(0.001)
+        plt.clf()
+        plt.plot(t, result, 'b')
+        plt.hold(True)
+        plt.plot([0, N], [200, 200], '-.r')
+        plt.hold(False)
+        plt.xlim([0, N])
+        plt.ylim([0, 250])
+        plt.pause(0.001)
 
         print("{}-th EPISODE : {} steps".format(episode, episode_time))
         episode_time = 0
@@ -101,11 +96,13 @@ while True:
         print reward, terminal
         episode_time += 1
 
-    action = agent.step(new_state=encoder(obs),
-                        reward=reward,
-                        terminal=terminal,
-                        action_list=range(env.action_space.n),
-                        test=False)
+    if episode_time >= 200 and terminal: # Pass the positive time-dependent terminal
+        pass
+    else:
+        action = agent.step(new_state=encoder(obs),
+                            reward=reward,
+                            terminal=terminal,
+                            action_list=range(env.action_space.n))
 
     print "action : ", action
     print "state : ", encoder(obs)

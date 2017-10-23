@@ -23,7 +23,6 @@ logger.propagate = False
 
 
 class ModelBased(object):
-    NULL_ACTION = "null action"
 
     def __init__(self,
                  discount_factor=0.95,
@@ -45,7 +44,6 @@ class ModelBased(object):
         :param int vi_interval: This value define how often execute the value iteration
         :param int maximum_state_id: Maximum number of states that the agent generates
         """
-
 
         # Model Description
         # {
@@ -132,14 +130,14 @@ class ModelBased(object):
         """
 
         # Update and grow the model table if necessary. But the added tables are "unknown" status
-        self._update_table_state_action(next_state, action_list)
+        self._update_table_state_action(next_state, action_list, terminal)
 
         if state_action:
             state = state_action[0]
             action = state_action[1]
 
             # Update the transition model given the table model. The "unknown" state only can change to "known" in this process
-            self._update_transition_table(state, action, next_state, terminal)
+            self._update_transition_table(state, action, next_state)
 
             # Update the transition statistics
             self._model[state][action]["__count"] += 1
@@ -153,7 +151,7 @@ class ModelBased(object):
             reward_prev = self._model[state][action]["__reward"]
             self._model[state][action]["__reward"] = alpha * reward + (1.0 - alpha) * reward_prev
 
-    def _update_table_state_action(self, state, action_list):
+    def _update_table_state_action(self, state, action_list, terminal):
         """ Update the table of the model.
 
         :param state:
@@ -161,69 +159,80 @@ class ModelBased(object):
         :return:
         """
         if self._match_state(state):
-            # if state is already experienced, but action set may be changed
-            for a in action_list:
-                if not a in self._model[state].keys():
-                    self._add_new_action(state, a)
+            if terminal:
+                # If state is not terminal in the previous situation, set it as terminal state
+                self._add_new_state(state, action_list, terminal)
+            else:
+                # If the state was terminal before but not terminal anymore, reset the state
+                if state in self._terminal_state_set:
+                    self._terminal_state_set.remove(state)
+                    self._add_new_state(state, action_list, terminal)
+
+                # if state is already experienced, but action set may be changed
+                for a in action_list:
+                    if not a in self._model[state].keys():
+                        self._add_new_action(state, a)
         else:
             # if state have never seen experienced until now
-            self._add_new_state(state)
+            self._add_new_state(state, action_list, terminal)
 
-            # Check whether the state space is smaller than the limit
-            assert len(self._model.keys()) < self._maximum_state_id, "Too much state. The number of states exceed the limit. : |S| > {}".format(self._maximum_state_id)
-
-            for a in action_list:
-                self._add_new_action(state, a)
-
-    def _add_new_state(self, state):
+    def _add_new_state(self, state, action_list, terminal):
         """ Add a new state in model and the value function table
 
         :param state:
+        :param list action_list: action list at the state
         :param terminal:
         :return:
         """
-        self._model.update({state: {}})
-        self._value_function.update({state: self._initial_value(loc=0.0, scale=1e-5)})
 
-    def _add_new_action(self, state, action):
+        self._model.update({state: {}})
+        self._value_function.update({state: 0.0})
+        for a in action_list:
+            self._add_new_action(state, a, terminal)
+
+        if terminal:
+            # At terminal, the state transition is only consequence to the same state
+            for a in action_list:
+                self._model[state][a].update({state: {"__count": 1}})
+
+            # Add next state in the terminal set
+            self._terminal_state_set.add(state)
+
+        # Check whether the state space is smaller than the limit
+        assert len(self._model.keys()) < self._maximum_state_id, "Too much state. The number of states exceed the limit. : |S| > {}".format(self._maximum_state_id)
+
+    def _add_new_action(self, state, action, terminal=False):
         """ Add a new action in the model table
 
         :param state:
         :param action:
         :return:
         """
-        self._model[state].update({action:
-                                       {"__count": 0,
-                                        "__reward": 0,
-                                        "__status": "unknown"}
-                                   })
+        if terminal:
+            self._model[state].update({action:
+                                           {"__count": 1,
+                                            "__reward": 0,
+                                            "__status": "known"}
+                                       })
+        else:
+            self._model[state].update({action:
+                                           {"__count": 0,
+                                            "__reward": 0,
+                                            "__status": "unknown"}
+                                       })
 
-    def _update_transition_table(self, state, action, next_state, terminal):
+    def _update_transition_table(self, state, action, next_state):
         """ Update and grow the model table. NOTE: terminal signal is associated with next_state!
 
         :param state:
         :param action:
         :param next_state:
-        :param bool terminal: if the next_state is a terminal state or not
         :return:
         """
-
-        if terminal and not (next_state in self._terminal_state_set):
-            self._model[state][action].update({next_state: {"__count": 0}})
-
-            # Add next state in the terminal set
-            self._terminal_state_set.add(next_state)
 
         if next_state not in self._model[state][action].keys():
             # Add next state subsequent to the state-action
             self._model[state][action].update({next_state: {"__count": 0}})
-
-        if next_state not in self._model.keys():
-            # Add next state is it is unknown state
-            self._add_new_state(next_state)
-
-            # Check whether the state space is smaller than the limit
-            assert len(self._model.keys()) < self._maximum_state_id, "Too much state. The number of states exceed the limit. : |S| > {}".format(self._maximum_state_id)
 
     def _get_action(self, state, action_list, test=False):
         """ Obtain next action with respect to the given state
@@ -246,7 +255,6 @@ class ModelBased(object):
                 return random.choice(action_list)
             else:
                 action, _, v_list = self._get_greedy_action(state, action_list, self._value_function)
-                #logger.debug("Value list : {}".format(v_list))
                 return action
 
     def _get_greedy_action(self, state, action_list, value_function):
@@ -264,12 +272,12 @@ class ModelBased(object):
                 r = self._model[state][a]["__reward"]
                 v_ = 0.0
                 for next_state in self._get_next_state_list(state, a):
-                    p_sas = self._model[state][a][next_state]["__count"] / self._model[state][a]["__count"]
+                    p_sas = float(self._model[state][a][next_state]["__count"]) / float(self._model[state][a]["__count"])
                     v_ += p_sas * value_function[next_state]
                 value = r + self._discount_factor * v_
             else:
                 # Set a default value as an exploration parameter if (s,a) set have never been executed
-                value = np.random.normal(loc=self._exploration_reward, scale=1e-5)
+                value = np.random.normal(loc=self._exploration_reward, scale=1e-6)
 
             value_list.append(value)
 
@@ -431,15 +439,12 @@ class ModelBased(object):
 
         # Get Colors
         colors = np.array(self._value_function.values(), dtype=np.float32)
-        # normalize color
-        colors = 4 * np.clip(colors / np.max(np.abs([colors.max(), np.abs(colors.min())])),
-                             a_max=1,
-                             a_min=-1)
-        colors = 4 + np.rint(colors).astype(np.uint8)
-
         node_color = {}
-        for i, state in enumerate(state_list):
-            node_color.update({state: color_names[colors[i]]})
+        for state in state_list:
+            n = int(4 + 4 * np.clip(self._value_function[state] / np.max(np.abs([colors.max(), np.abs(colors.min())])),
+                                    a_max=1,
+                                    a_min=-1))
+            node_color.update({state: color_names[n]})
 
         # Draw states
         labels = {}
@@ -449,7 +454,7 @@ class ModelBased(object):
             c.attr(label="Terminal")
             for state in state_list:
                 g.attr('node', style='filled', color=node_color[state], shape='circle')
-                v = np.round(self._value_function[state] * 1000.0)/1000.0
+                v = np.round(self._value_function[state] * 1000.0) / 1000.0
                 s_label = str(state) + " , " + str(v)
                 labels.update({state: s_label})
                 if state in self._terminal_state_set:
@@ -466,8 +471,7 @@ class ModelBased(object):
                         g.edge(labels[state], labels[next_state], label=str(action))
                 else:
                     # Create an "unknown" state if necessary
-                    if state not in self._terminal_state_set:
-                        g.attr('node', style='filled', color='gray', shape='circle')
-                        g.edge(labels[state], "unknown", label=str(action), fontsize="10.0")
+                    g.edge(labels[state], "unknown", label=str(action), fontsize="10.0")
+
 
         g.view(filename="environment.dot")
