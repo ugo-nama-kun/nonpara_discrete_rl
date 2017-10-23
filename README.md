@@ -45,6 +45,14 @@ print qlean.get_q_value()
 
 Please see ```/example``` for more detail 
 
+## A Result of Model-based RL in Cart-pole environment
+
+The code can be found in ```/example/model_based_gym.py```.
+
+![env](https://raw.githubusercontent.com/ugo-nama-kun/nonpara_discrete_rl/images/environment.png)
+![plot](https://raw.githubusercontent.com/ugo-nama-kun/nonpara_discrete_rl/images/figure_1.png)
+
+
 ## NOTE: Initial Motivation
 Usually the implementation of RL algorithms with table representations are started with the definition of the Q-table with given state and action space size (|S| and |A|). I remember that I wrote those definition when I implemented the first Q-Learning experiment in my computer 💻
 
