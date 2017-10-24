@@ -61,6 +61,7 @@ class ModelBased(object):
 
         self._model = {}
         self._value_function = {}  # {state: value}
+        self.state_encoding_dict = {} # {state: tag}
         self._terminal_state_set = set()
 
         self._discount_factor = discount_factor
@@ -330,6 +331,15 @@ class ModelBased(object):
                 break
         self._value_function = copy.deepcopy(vf)
 
+    def encode(self, state):
+        state_ = str(state)
+        if state_ in self.state_encoding_dict.keys():
+            return self.state_encoding_dict[state_]
+        else:
+            tag = len(self.state_encoding_dict.keys()) + 1
+            self.state_encoding_dict.update({state_: tag})
+            return tag
+
     def step(self, new_state, reward, terminal, action_list, test=False):
         """ Take a single step of the agent
 
@@ -342,11 +352,14 @@ class ModelBased(object):
         """
         assert len(action_list) > 0, "action_list has to have at least one action"
 
+        # State encoding
+        new_state_ = self.encode(new_state)
+
         # Expand dictionary if new_state is unknown
         if not test:
             # Model Updating
             self._update_model(self._state_action,
-                               new_state,
+                               new_state_,
                                reward,
                                terminal,
                                action_list)
@@ -361,9 +374,9 @@ class ModelBased(object):
         # Take an action
         # new_action = np.random.choice(action_list)
         # if self._state_action:
-        new_action = self._get_action(new_state, action_list, test)
+        new_action = self._get_action(new_state_, action_list, test)
 
-        self._state_action = (new_state, new_action)
+        self._state_action = (new_state_, new_action)
         return new_action
 
     def get_model(self):
