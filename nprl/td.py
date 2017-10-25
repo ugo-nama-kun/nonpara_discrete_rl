@@ -12,7 +12,8 @@ class TDLearning(object):
                  initial_v_value=0.0,
                  maximum_state_id=10000):
 
-        self.__values = {}
+        self.__values = {} # {state: value}
+        self._state_encoding_dict = {} # {state: tag}
         self.__alpha = alpha
         self.__gamma = gamma
         self.__initial_v_val = initial_v_value
@@ -28,7 +29,10 @@ class TDLearning(object):
         :param bool terminal: Terminal flag
         """
 
-        self.__add_new_state_if_unknown(state)
+        # State encoding
+        state_ = self._encode_state(state)
+
+        self.__add_new_state_if_unknown(state_)
 
         # Assert is number of environment state is larger than the expected maximum_id
         if self.__maximum_state_id is not None:
@@ -36,14 +40,14 @@ class TDLearning(object):
 
         # Set previous state
         if self.__prev_state is None:
-            self.__prev_state = state
+            self.__prev_state = state_
         else:
-            self.__update_td(self.__prev_state, state, reward, terminal)
-            self.__prev_state = state
+            self.__update_td(self.__prev_state, state_, reward, terminal)
+            self.__prev_state = state_
 
         # Treatment of terminal states
         if terminal:
-            self.__set_terminal_value(state)
+            self.__set_terminal_value(state_)
             self.__prev_state = None
 
     def __add_new_state_if_unknown(self, state):
@@ -60,6 +64,14 @@ class TDLearning(object):
         :param state:
         """
         self.__values.update({state: 0.0})
+
+    def _encode_state(self, state):
+        if state in self._state_encoding_dict.keys():
+            return self._state_encoding_dict[state]
+        else:
+            tag = len(self._state_encoding_dict.keys())
+            self._state_encoding_dict.update({state : tag})
+            return tag
 
     def __update_td(self, state, state_dash, reward, terminal):
         """

@@ -30,6 +30,7 @@ class QLearning(object):
 
         # Value Parameters
         self._q_values = {} # {state: {action: value}}
+        self._state_encoding_dict = {} # {state: tag}
         self.lr = lr
         self._discount_factor = discount_factor
         self._initial_q_val = initial_q_value
@@ -186,29 +187,40 @@ class QLearning(object):
         if terminal:
             self._set_terminal_value(new_state, action_list)
             self._state_action = None
-            
+
+    def _encode_state(self, state):
+        if state in self._state_encoding_dict.keys():
+            return self._state_encoding_dict[state]
+        else:
+            tag = len(self._state_encoding_dict.keys())
+            self._state_encoding_dict.update({state : tag})
+            return tag
+
     def step(self, new_state, reward, terminal, action_list, test=False):
         """
-        Taek a sigle step of the agent
-        :param new_state: state observed by agent
+        Take a sigle step of the agent
+        :param string new_state: state observed by agent
         :param float reward: reward as a result of (state, action, new_state) triple
         :param bool terminal: Terminal flag
-        :param list action_list: action set at new_state A(s)
+        :param string list action_list: action set at new_state A(s) as a list of strings
         :param bool test:
         :return:
         """
         assert len(action_list) > 0, "action_list has to have at least one action"
 
+        # State encoding
+        new_state_ = self._encode_state(new_state)
+
         # Expand dictionary if new_state is unknown
         if not test:
-            self._add_new_state_action_if_unknown(new_state, action_list)
+            self._add_new_state_action_if_unknown(new_state_, action_list)
 
         # Take an action
-        new_action = self._get_action(new_state, action_list, test)
+        new_action = self._get_action(new_state_, action_list, test)
 
-        # Update Stats
         if not test:
-            self._learning_step(new_state, new_action, reward, terminal, action_list)
+            # Update Stats
+            self._learning_step(new_state_, new_action, reward, terminal, action_list)
         return new_action
 
     def get_q_value(self):

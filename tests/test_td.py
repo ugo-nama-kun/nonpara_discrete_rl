@@ -26,10 +26,10 @@ class BasicTestSuite(unittest.TestCase):
                 td.step(states[now], reward, terminal)
 
         # Check values
-        self.assertAlmostEqual(td.get_v_value()[states[3]], 0, delta=0.1)
-        self.assertAlmostEqual(td.get_v_value()[states[2]], 1.0, delta=0.05)
-        self.assertAlmostEqual(td.get_v_value()[states[1]], 0.5, delta=0.05)
-        self.assertAlmostEqual(td.get_v_value()[states[0]], 0.25, delta=0.05)
+        self.assertAlmostEqual(td.get_v_value()[td._state_encoding_dict[states[3]]], 0, delta=0.1)
+        self.assertAlmostEqual(td.get_v_value()[td._state_encoding_dict[states[2]]], 1.0, delta=0.05)
+        self.assertAlmostEqual(td.get_v_value()[td._state_encoding_dict[states[1]]], 0.5, delta=0.05)
+        self.assertAlmostEqual(td.get_v_value()[td._state_encoding_dict[states[0]]], 0.25, delta=0.05)
 
 
 if __name__ == '__main__':
