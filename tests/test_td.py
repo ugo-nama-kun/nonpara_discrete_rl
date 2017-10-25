@@ -9,7 +9,7 @@ class BasicTestSuite(unittest.TestCase):
 
     def test_run_td(self):
 
-        td = TDLearning(gamma=0.5, maximum_state_id=None)
+        td = TDLearning(discount_rate=0.5, maximum_state_id=None)
 
         # Simple one-way environment
         states = ['ONE', 'TWO', 'THREE', 'FOUR']
