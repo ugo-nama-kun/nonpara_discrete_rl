@@ -199,10 +199,10 @@ class QLearning(object):
     def step(self, new_state, reward, terminal, action_list, test=False):
         """
         Take a sigle step of the agent
-        :param string new_state: state observed by agent
+        :param new_state: state observed by agent
         :param float reward: reward as a result of (state, action, new_state) triple
         :param bool terminal: Terminal flag
-        :param string list action_list: action set at new_state A(s) as a list of strings
+        :param list action_list: action set at new_state A(s) as a list of strings
         :param bool test:
         :return:
         """
