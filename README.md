@@ -49,8 +49,12 @@ Please see ```/example``` for more detail
 
 The code can be found in ```/example/model_based_gym.py```.
 
+### The MDP that the agent learned during the experiment
 ![env](https://raw.githubusercontent.com/ugo-nama-kun/nonpara_discrete_rl/images/environment.png)
+
+### Performance plot (vertical axis: steps in an episode, horizontal axis: episodes)
 ![plot](https://raw.githubusercontent.com/ugo-nama-kun/nonpara_discrete_rl/images/figure_1.png)
+
 
 
 ## NOTE: Initial Motivation
