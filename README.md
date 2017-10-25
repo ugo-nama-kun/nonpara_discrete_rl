@@ -2,7 +2,7 @@
 
 This is the experimental code of the non-parametric reinforcement learning with respect to the discrete state space and the discrete action space.
 
-The agent accepts ANY form of the action and the state representation as inputs (string, vector, and so on 😄). If the environment is a finite-state MDP (explicitly or implicitly), implemented algorithms shoud find an appropriate solution (from the implication of the convergence theorem of RL algorithms 📖).
+The agent accepts ANY form of the action and the state representation as inputs (string, vector, and so on 😄: NOTE: currrently a vector action have to be given as a string. The string is one of the universal interface 😅). If the environment is a finite-state MDP (explicitly or implicitly), implemented algorithms shoud find an appropriate solution (from the implication of the convergence theorem of RL algorithms 📖).
 
 ## Supported Algorithms
 - Algorithms
