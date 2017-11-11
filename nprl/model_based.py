@@ -186,15 +186,15 @@ class ModelBased(object):
         :return:
         """
 
-        self._model.update({state: {}})
-        self._value_function.update({state: 0.0})
+        self._model[state] = {}
+        self._value_function[state] = 0.0
         for a in action_list:
             self._add_new_action(state, a, terminal)
 
         if terminal:
             # At terminal, the state transition is only consequence to the same state
             for a in action_list:
-                self._model[state][a].update({state: {"__count": 1}})
+                self._model[state][a][state] = {"__count": 1}
 
             # Add next state in the terminal set
             self._terminal_state_set.add(state)
@@ -210,17 +210,14 @@ class ModelBased(object):
         :return:
         """
         if terminal:
-            self._model[state].update({action:
-                                           {"__count": 1,
-                                            "__reward": 0,
-                                            "__status": "known"}
-                                       })
+            self._model[state][action] = {"__count": 1,
+                                          "__reward": 0,
+                                          "__status": "known"}
+
         else:
-            self._model[state].update({action:
-                                           {"__count": 0,
-                                            "__reward": 0,
-                                            "__status": "unknown"}
-                                       })
+            self._model[state][action] = {"__count": 0,
+                                          "__reward": 0,
+                                          "__status": "unknown"}
 
     def _update_transition_table(self, state, action, next_state):
         """ Update and grow the model table. NOTE: terminal signal is associated with next_state!
@@ -233,7 +230,7 @@ class ModelBased(object):
 
         if next_state not in self._model[state][action].keys():
             # Add next state subsequent to the state-action
-            self._model[state][action].update({next_state: {"__count": 0}})
+            self._model[state][action][next_state] = {"__count": 0}
 
     def _get_action(self, state, action_list, test=False):
         """ Obtain next action with respect to the given state
@@ -337,7 +334,7 @@ class ModelBased(object):
             return self.state_encoding_dict[state_]
         else:
             tag = len(self.state_encoding_dict.keys()) + 1
-            self.state_encoding_dict.update({state_: tag})
+            self.state_encoding_dict[state_] = tag
             return tag
 
     def step(self, new_state, reward, terminal, action_list, test=False):
@@ -457,7 +454,7 @@ class ModelBased(object):
             n = int(4 + 4 * np.clip(self._value_function[state] / np.max(np.abs([colors.max(), np.abs(colors.min())])),
                                     a_max=1,
                                     a_min=-1))
-            node_color.update({state: color_names[n]})
+            node_color[state] = color_names[n]
 
         # Draw states
         labels = {}
@@ -469,7 +466,7 @@ class ModelBased(object):
                 g.attr('node', style='filled', color=node_color[state], shape='circle')
                 v = np.round(self._value_function[state] * 1000.0) / 1000.0
                 s_label = str(state) + " , " + str(v)
-                labels.update({state: s_label})
+                labels[state] = s_label
                 if state in self._terminal_state_set:
                     c.attr('node', style='filled', color="white", shape='circle')
                     c.node(s_label)

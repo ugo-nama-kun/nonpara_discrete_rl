@@ -56,21 +56,21 @@ class TDLearning(object):
         :param state:
         """
         if not self._match(state):
-            self._values.update({state: self._initial_v_val})
+            self._values[state] = self._initial_v_val
 
     def _set_terminal_value(self, state):
         """
         Set terminal value (zero) at terminal states
         :param state:
         """
-        self._values.update({state: 0.0})
+        self._values[state] = 0.0
 
     def _encode_state(self, state):
         if state in self._state_encoding_dict.keys():
             return self._state_encoding_dict[state]
         else:
             tag = len(self._state_encoding_dict.keys())
-            self._state_encoding_dict.update({state : tag})
+            self._state_encoding_dict[state] = tag
             return tag
 
     def _update_td(self, state, state_dash, reward, terminal):
@@ -88,7 +88,7 @@ class TDLearning(object):
             td_error = float(reward) - self._values[state]
 
         new_value = self._values[state] + self._lr * td_error
-        self._values.update({state: new_value})
+        self._values[state] = new_value
 
     def _match(self, state):
         """

@@ -99,12 +99,12 @@ class QLearning(object):
         :param action_list:
         """
         if not self._match_state(state):
-            self._q_values.update({state: {}})
+            self._q_values[state] = {}
             for action in action_list:
                 f = 0.0
                 if self.initial_fluctuation:
                     f = np.random.uniform(low=-10**-5, high=10**-5)
-                self._q_values[state].update({action: self._initial_q_val + f})
+                self._q_values[state][action] = self._initial_q_val + f
         else:
             # State found but action_list is different from previous status
             for action in action_list:
@@ -112,7 +112,7 @@ class QLearning(object):
                     f = 0.0
                     if self.initial_fluctuation:
                         f = np.random.uniform(low=-10 ** -5, high=10 ** -5)
-                    self._q_values[state].update({action: self._initial_q_val + f})
+                    self._q_values[state][action] = self._initial_q_val + f
 
     def _match_state(self, state):
         """
@@ -138,7 +138,7 @@ class QLearning(object):
         :param list action_list: action set at new_state A(s)
         """
         for action in action_list:
-            self._q_values[state].update({action: 0.0})
+            self._q_values[state][action] = 0.0
 
     def _update_q(self, state_action, next_state, reward, terminal):
         """
@@ -193,7 +193,7 @@ class QLearning(object):
             return self._state_encoding_dict[state]
         else:
             tag = len(self._state_encoding_dict.keys())
-            self._state_encoding_dict.update({state : tag})
+            self._state_encoding_dict[state] = tag
             return tag
 
     def step(self, new_state, reward, terminal, action_list, test=False):
